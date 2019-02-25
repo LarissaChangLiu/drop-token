@@ -57,16 +57,17 @@ public class DropTokenService {
 	public CreateGameResponse createGame(CreateGameRequest creatGameRequest) throws DropTokenException
 	{
 		//TODO: need to be synchronized
+		//malformed request, only support two players for one game
 		if (creatGameRequest.getPlayers().size() > 2)
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 400, 
+			throw new DropTokenException(400, 
 					"Drop token game only support two players",
 					"Drop token game only support two players");
 		}
-		
+		//malformed request, only support 4 X 4 grid
 		if (creatGameRequest.getColumns() > 4 || creatGameRequest.getRows() > 4)
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 400, 
+			throw new DropTokenException(400, 
 					"Drop token game only support 4 X 4 grid",
 					"Drop token game only support 4 X 4 grid");
 		}
@@ -93,18 +94,18 @@ public class DropTokenService {
 		Game game = this.gameRoom.getGame(gameId);
 		if (game == null)
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 404, 
+			throw new DropTokenException(404, 
 					"Game doesn't exist",
 					"Please verify that game is properly generated");
 		}
-		if (game.getGameStatus().equals(GameStatusEnum.DONE))
+		if (game.getGameStatus().equals(GameStatusEnum.DONE) && game.getWinner() != null)
 		{
 			return new GameStatusResponse.Builder()
 					.players(game.getPlayers())
 					.state(game.getGameStatus().toString())
-					.winner(game.getWinner() == null ? "null" : game.getWinner()).build();
+					.winner(game.getWinner()).build();
 		} 
-		else 
+		else
 		{
 			return new GameStatusResponse.Builder()
 					.players(game.getPlayers())
@@ -131,9 +132,10 @@ public class DropTokenService {
 	public GetMovesResponse getMoves(String gameId) throws DropTokenException
 	{
 		Game game = this.gameRoom.getGame(gameId);
+		//Game doesn't exist , return 404
 		if (game == null)
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 404, 
+			throw new DropTokenException(404, 
 					"Game doesn't exist",
 					"Please verify that game is properly generated");
 		}
@@ -162,16 +164,20 @@ public class DropTokenService {
 	
 	public GetMovesResponse getMovesStartUntil(String gameId, int start, int until) throws DropTokenException
 	{
+		
+		//Malformed request, start shouldn't larger or equal to until, return 400
 		if (start >= until)
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 400, 
+			throw new DropTokenException(400, 
 					"start can't larger or equal to until",
 					"start can't larger or equal to until");
 		}
+		
+		//Game doesn't exist, return 404
 		Game game = this.gameRoom.getGame(gameId);
 		if (game == null)
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 404, 
+			throw new DropTokenException(404, 
 					"Game doesn't exist",
 					"Please verify that game is properly generated");
 		}
@@ -209,24 +215,31 @@ public class DropTokenService {
 	
 	public GetMovesResponse getMovesStart(String gameId, int start) throws DropTokenException
 	{
+		//Game doesn't exist, return 404
 		Game game = this.gameRoom.getGame(gameId);
 		if (game == null)
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 404, 
+			throw new DropTokenException(404, 
 					"Game doesn't exist",
 					"Please verify that game is properly generated");
 		}
+		
+		//Malformed request, start shouldn't larger or equal to the number of games, return 400
 		int size = game.getMoves().size();
 		if (start >= size)
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 400, 
+			throw new DropTokenException(400, 
 					"start is too large",
 					"check nums of moves in that game");
 		}
+		
+		//if user input a start which is less than zero, update start with zero, so that the sublist start with the first move
 		if (start < 0) 
 		{
 			start = 0;
 		}
+		
+		//query moves from start 
 		List<GetMoveResponse> getMoveResponse = this.gameRoom.getGame(gameId).getMoves().subList(start, size).stream().map(move -> {
 			String type = move.getType().toString();
 			String player = move.getPlayer();
@@ -238,7 +251,9 @@ public class DropTokenService {
 						.player(player)
 						.column(column)
 						.build();
-			} else {
+			} 
+			else
+			{
 				return new GetMoveResponse.Builder()
 						.type(type)
 						.player(player)
@@ -252,17 +267,22 @@ public class DropTokenService {
 	
 	public GetMovesResponse getMovesUntil(String gameId, int until) throws DropTokenException
 	{
+		//Game doesn't exist, return 404
 		Game game = this.gameRoom.getGame(gameId);
 		if (game == null)
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 404, 
+			throw new DropTokenException(404, 
 					"Game doesn't exist",
 					"Please verify that game is properly generated");
 		}
+		
+		//if user enter a until larger than the number of moves , then update until with the size of moves list , so that program won't be not over flow.
 		int size = game.getMoves().size();
 		if (until > size){
 			until = size;
 		}
+		
+		//query moves from first until the entry point
 		List<GetMoveResponse> getMoveResponse = game.getMoves().subList(0, until).stream().map(move -> {
 			String type = move.getType().toString();
 			String player = move.getPlayer();
@@ -306,7 +326,7 @@ public class DropTokenService {
 		//Only support 4 X 4 grid
 		if (postMoveRequest.getColumn() > 4)
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 400, 
+			throw new DropTokenException(400, 
 					"Game only support 4 X 4 grid",
 					"malformed input of column");
 		}
@@ -314,26 +334,26 @@ public class DropTokenService {
 		Game game = this.gameRoom.getGame(gameId);
 		if (game == null)
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 404, 
+			throw new DropTokenException(404, 
 					"Game doesn't exist",
 					"Please verify that game is properly generated");
 		}
 		//Game is finished, shouldn't allow new move
 		if (game.getGameStatus().equals(GameStatusEnum.DONE))
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 400, 
+			throw new DropTokenException(400, 
 					"Game is finished",
 					"Game is finished");
 		}
 		//Player doesn't exist in this game
 		if (!game.getPlayers().stream().anyMatch(player -> player.toLowerCase().equals(playerId))){
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 404, 
+			throw new DropTokenException(404, 
 					"player doesn't exist in this game",
 					"malformed input of player");
 		}
 		//if player doesn't match with current player, shouldn't process the move
 		if (game.getNextTurnPlayer() != null && !game.getNextTurnPlayer().toLowerCase().equals(playerId)){
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 409, 
+			throw new DropTokenException(409, 
 					"player is not suppose to take move at this turn",
 					"malformed input of player");
 		}
@@ -363,7 +383,7 @@ public class DropTokenService {
 	{
 		if (moveNum < 0) 
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 400, 
+			throw new DropTokenException(400, 
 					"move number can't be less than 0",
 					"move number minus one will be index");
 		}
@@ -371,13 +391,13 @@ public class DropTokenService {
 		Game game = this.gameRoom.getGame(gameId);
 		if (game == null)
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 404, 
+			throw new DropTokenException(404, 
 					"Game doesn't exist",
 					"Please verify that game is properly generated");
 		}
 		if (moveNum > game.getMoves().size())
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 400, 
+			throw new DropTokenException(400, 
 					"move number is too large",
 					"check numbers of moves in the game");
 		}
@@ -411,13 +431,13 @@ public class DropTokenService {
 		//Game does exit.-- 404
 		if (game == null)
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 404, 
+			throw new DropTokenException(404, 
 					"Game doesn't exist",
 					"Please verify that game is properly generated");
 		}
 		//Game is already in DONE state.-- 410
 		if (game.getGameStatus().equals(GameStatusEnum.DONE)){
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 410, 
+			throw new DropTokenException(410, 
 					"Game is already finished",
 					"check game status or check the winner");
 		}
@@ -425,7 +445,7 @@ public class DropTokenService {
 		
 		if (!game.getPlayers().stream().anyMatch(player -> player.toLowerCase().equals(playerId)))
 		{
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 404, 
+			throw new DropTokenException(404, 
 					"player doesn't exsit in this game",
 					"check player list");
 		}

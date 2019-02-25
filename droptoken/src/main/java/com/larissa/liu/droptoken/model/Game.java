@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.ws.rs.core.Response;
-
 import com.larissa.liu.droptoken.errorhandling.DropTokenException;
 
 public class Game 
@@ -60,18 +58,25 @@ public class Game
 
 	public int addMove(Move move) throws DropTokenException
 	{
+		if (!move.getColumn().isPresent() || move.getMoveType().equals(GameMoveEnum.QUIT))
+		{
+			move.setMoveType(GameMoveEnum.QUIT);
+			this.gameStatus = GameStatusEnum.DONE;
+			this.moves.add(move);
+			return this.moves.size() - 1;
+		}
 		int org_emptyPlace = this.emptyPlace;
 		String org_nextPlayer = this.nextTurnPlayer;
 		String player = move.getPlayer().toLowerCase();
 		int colIndex = move.getColumn().get() - 1;
 		
 		if (top[colIndex] + 1 >= this.board.length){
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 409, 
+			throw new DropTokenException(409, 
 					"Please try another column, this column is full",
 					"check row length");
 		}
 		if (colIndex < 0){
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 409, 
+			throw new DropTokenException(409, 
 					"Please try another column, this column can't be less or equal to 0",
 					"check row length");
 		}
@@ -99,7 +104,7 @@ public class Game
 			this.moves.remove(this.moves.size() - 1);
 			this.board[top[colIndex]][colIndex] = "";
 			this.nextTurnPlayer = org_nextPlayer;
-			throw new DropTokenException(Response.Status.CONFLICT.getStatusCode(), 500, 
+			throw new DropTokenException(500, 
 					"Internal Error",
 					"Internal Error");
 		}

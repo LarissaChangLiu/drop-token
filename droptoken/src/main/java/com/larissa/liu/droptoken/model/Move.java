@@ -22,6 +22,16 @@ public class Move {
     		this.column = column;
     }
 
+    public void setMoveType(GameMoveEnum type)
+    {
+    	this.type = type;
+    }    
+    
+    public GameMoveEnum getMoveType()
+    {
+    	return this.type;
+    }
+    
 	public GameMoveEnum getType()
     {
     		return this.type;

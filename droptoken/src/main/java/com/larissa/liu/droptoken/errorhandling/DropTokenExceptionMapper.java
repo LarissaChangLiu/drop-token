@@ -6,17 +6,18 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
+import javax.ws.rs.ext.Provider;
 
 /**
  *
  */
-public class DropTokenExceptionMapper implements ExceptionMapper<RuntimeException>  {
+@Provider
+public class DropTokenExceptionMapper implements ExceptionMapper<DropTokenException>  {
     private static final Logger logger = LoggerFactory.getLogger(DropTokenExceptionMapper.class);
     public Response toResponse(RuntimeException e) {
         logger.error("Unhandled exception.", e);
         return Response.status(500).build();
     }
-    
     public Response toResponse(DropTokenException ex) {
 		return Response.status(ex.getStatus())
 				.entity(new ErrorMessage(ex))

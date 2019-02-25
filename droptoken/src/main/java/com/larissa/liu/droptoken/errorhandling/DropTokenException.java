@@ -5,18 +5,14 @@ public class DropTokenException extends Exception
 	private static final long serialVersionUID = 1L;
 	
 	Integer status;
-	
-	/** application specific error code */
-	int code; 
 		
 	/** detailed error description for developers*/
 	String developerMessage;	
 	
-	public DropTokenException(int status, int code, String message,
+	public DropTokenException(int status, String message,
 			String developerMessage) {
 		super(message);
 		this.status = status;
-		this.code = code;
 		this.developerMessage = developerMessage;
 	}
 
@@ -28,14 +24,6 @@ public class DropTokenException extends Exception
 
 	public void setStatus(int status) {
 		this.status = status;
-	}
-
-	public int getCode() {
-		return code;
-	}
-
-	public void setCode(int code) {
-		this.code = code;
 	}
 
 	public String getDeveloperMessage() {
